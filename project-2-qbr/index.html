@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QBR Pilot — AI Business Review Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b; --surface: #111113; --panel: #18181b;
+      --border: #27272a; --border-hi: #3f3f46;
+      --text: #fafafa; --text-2: #a1a1aa; --text-3: #71717a;
+      --accent: #f59e0b; --accent-dim: rgba(245,158,11,0.08);
+      --mono: 'JetBrains Mono', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(9,9,11,0.92); backdrop-filter: blur(12px);
+    }
+    .nav-inner {
+      max-width: 760px; margin: 0 auto; padding: 0 24px;
+      height: 52px; display: flex; align-items: center; gap: 10px;
+    }
+    .back { font-size: 0.8rem; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
+    .back:hover { color: var(--text-2); }
+    .sep { color: var(--border-hi); }
+    .crumb { font-size: 0.8rem; color: var(--text-2); font-family: var(--mono); }
+
+    .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; }
+    .hero { padding: 48px 0 36px; }
+    .hero-tag {
+      display: inline-block; font-family: var(--mono); font-size: 0.68rem;
+      color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 16px; padding: 4px 10px;
+      border: 1px solid rgba(245,158,11,0.25); border-radius: 4px; background: var(--accent-dim);
+    }
+    h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.04em; color: var(--text); margin-bottom: 10px; }
+    .hero-sub { font-size: 0.88rem; color: var(--text-2); line-height: 1.7; max-width: 540px; }
+
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px; margin-bottom: 16px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { margin-bottom: 20px; }
+    .field:last-of-type { margin-bottom: 0; }
+
+    label {
+      display: block; font-size: 0.72rem; font-weight: 600;
+      color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase;
+      font-family: var(--mono); margin-bottom: 8px;
+    }
+    input, textarea {
+      width: 100%; padding: 10px 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-size: 0.88rem; font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s;
+    }
+    textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--text-3); font-size: 0.82rem; }
+
+    .submit-btn {
+      width: 100%; margin-top: 24px; padding: 12px;
+      background: var(--accent); border: none; border-radius: 8px;
+      color: #000; font-size: 0.9rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.85; }
+    .submit-btn:disabled { background: var(--border); color: var(--text-3); cursor: not-allowed; opacity: 1; }
+
+    .result-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      border-radius: 12px; padding: 24px 28px; display: none;
+    }
+    .result-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+    }
+    .result-label {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+    }
+    .copy-btn {
+      padding: 6px 14px; background: transparent;
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-3); font-size: 0.75rem; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .qbr-output {
+      white-space: pre-wrap; line-height: 1.85;
+      font-size: 0.88rem; color: #d4d4d8;
+    }
+    .qbr-output.loading { color: var(--text-3); font-style: italic; }
+
+    @media (max-width: 580px) {
+      .row { grid-template-columns: 1fr; }
+      .form-card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="back" href="/">← Portfolio</a>
+    <span class="sep">/</span>
+    <span class="crumb">QBR Pilot</span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-tag">02 · Executive Reporting</div>
+    <h1>📋 QBR Pilot</h1>
+    <p class="hero-sub">Fill in raw account data and generate a structured Quarterly Business Review brief — six sections, professional prose, ready to drop into any deck or email. Built because I spent a year producing SLA reports and wanted to show how that maps to a real CSM deliverable.</p>
+  </div>
+
+  <div class="form-card">
+    <div class="row">
+      <div class="field">
+        <label>Company / Account</label>
+        <input type="text" id="company" placeholder="e.g. Apex Telecom Ltd">
+      </div>
+      <div class="field">
+        <label>Product / Platform</label>
+        <input type="text" id="product" placeholder="e.g. CRM & Analytics Suite">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Contract value</label>
+        <input type="text" id="contract" placeholder="e.g. £48,000/year">
+      </div>
+      <div class="field">
+        <label>Renewal date</label>
+        <input type="text" id="renewal" placeholder="e.g. 30 September 2026">
+      </div>
+    </div>
+    <div class="field">
+      <label>Key wins this quarter</label>
+      <textarea id="wins" placeholder="e.g. Onboarded 3 new teams, reduced ticket resolution time by 22%, completed Salesforce integration"></textarea>
+    </div>
+    <div class="field">
+      <label>Usage &amp; adoption stats</label>
+      <textarea id="usage" placeholder="e.g. 87% of licensed users active monthly, 14 workflows automated, feature adoption up from 40% to 68%"></textarea>
+    </div>
+    <div class="field">
+      <label>Open risks or concerns</label>
+      <textarea id="risks" placeholder="e.g. Training adoption slow in Manchester team, 2 unresolved P2 tickets, billing dispute pending"></textarea>
+    </div>
+    <div class="field">
+      <label>Expansion opportunities</label>
+      <textarea id="expansion" placeholder="e.g. Finance team interested in analytics module, 2 additional seats likely in Q3, possible Enterprise upgrade"></textarea>
+    </div>
+    <button class="submit-btn" id="genBtn" onclick="generateQBR()">Generate QBR Brief</button>
+  </div>
+
+  <div class="result-card" id="result">
+    <div class="result-header">
+      <div class="result-label">Generated QBR Brief</div>
+      <button class="copy-btn" onclick="copyText()">Copy to clipboard</button>
+    </div>
+    <div class="qbr-output loading" id="qbrOutput">Writing your QBR brief…</div>
+  </div>
+</div>
+
+<script>
+  async function generateQBR() {
+    const company   = document.getElementById('company').value;
+    const product   = document.getElementById('product').value;
+    const contract  = document.getElementById('contract').value;
+    const renewal   = document.getElementById('renewal').value;
+    const wins      = document.getElementById('wins').value;
+    const usage     = document.getElementById('usage').value;
+    const risks     = document.getElementById('risks').value;
+    const expansion = document.getElementById('expansion').value;
+
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true; btn.textContent = 'Generating…';
+
+    const result = document.getElementById('result');
+    result.style.display = 'block';
+    const output = document.getElementById('qbrOutput');
+    output.className = 'qbr-output loading';
+    output.textContent = 'Writing your QBR brief…';
+
+    try {
+      const res  = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, product, contract, renewal, wins, usage, risks, expansion }) });
+      const data = await res.json();
+      output.className = 'qbr-output';
+      output.textContent = data.qbr;
+    } catch (e) {
+      output.className = 'qbr-output';
+      output.textContent = 'Error generating QBR. Please check API configuration and try again.';
+    }
+    btn.disabled = false; btn.textContent = 'Regenerate';
+  }
+
+  function copyText() {
+    const text = document.getElementById('qbrOutput').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+    });
+  }
+</script>
+</body>
+</html>
